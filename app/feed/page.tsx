@@ -43,6 +43,7 @@ export default function FeedPage() {
 
   const handleNewPost = (post: Post) => setPosts(prev => [post, ...prev])
   const handlePostRollback = (postId: string) => setPosts(prev => prev.filter(p => p.id !== postId))
+  const handlePostConfirmed = (tempId: string, realPost: Post) => setPosts(prev => prev.map(p => p.id === tempId ? realPost : p))
   const handleDelete = (postId: string) => setPosts(prev => prev.filter(p => p.id !== postId))
 
   return (
@@ -85,6 +86,7 @@ export default function FeedPage() {
                     username={profile.username}
                     onPost={handleNewPost}
                     onPostRollback={handlePostRollback}
+                    onPostConfirmed={handlePostConfirmed}
                   />
                 </div>
               )}

@@ -13,9 +13,10 @@ interface PostComposerProps {
   username: string
   onPost: (post: Post) => void
   onPostRollback: (postId: string) => void
+  onPostConfirmed: (tempId: string, realPost: Post) => void
 }
 
-export default function PostComposer({ userId, displayName, username, onPost, onPostRollback }: PostComposerProps) {
+export default function PostComposer({ userId, displayName, username, onPost, onPostRollback, onPostConfirmed }: PostComposerProps) {
   const router = useRouter()
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
@@ -51,17 +52,20 @@ export default function PostComposer({ userId, displayName, username, onPost, on
     setContent('')
 
     const supabase = createClient()
-    const { error: insertError } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from('posts')
       .insert({ user_id: userId, content: optimisticPost.content })
+      .select('*, profiles!user_id(*)')
+      .single()
 
-    if (insertError) {
+    if (insertError || !inserted) {
       setError('Failed to post. Please try again.')
       onPostRollback(optimisticPost.id)
       setLoading(false)
       return
     }
 
+    onPostConfirmed(optimisticPost.id, inserted as Post)
     setLoading(false)
     router.refresh()
   }

@@ -14,14 +14,20 @@ interface PostCardProps {
 
 export default function PostCard({ post, currentUserId, onDelete }: PostCardProps) {
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(false)
   const isOwner = currentUserId === post.user_id
 
   const handleDelete = async () => {
     if (!confirm('Delete this post?')) return
     setDeleting(true)
+    setDeleteError(false)
     const supabase = createClient()
     const { error } = await supabase.from('posts').delete().eq('id', post.id)
-    if (error) { setDeleting(false); return }
+    if (error) {
+      setDeleting(false)
+      setDeleteError(true)
+      return
+    }
     onDelete?.(post.id)
   }
 
@@ -55,6 +61,7 @@ export default function PostCard({ post, currentUserId, onDelete }: PostCardProp
             )}
           </div>
           <p className="mt-1 text-gray-800 whitespace-pre-wrap break-words">{post.content}</p>
+          {deleteError && <p className="text-xs text-red-500 mt-1">Failed to delete. Please try again.</p>}
         </div>
       </div>
     </div>

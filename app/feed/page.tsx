@@ -9,12 +9,16 @@ import PostComposer from '@/components/posts/post-composer'
 import PostCard from '@/components/posts/post-card'
 import type { Post, Profile } from '@/lib/types'
 
+type FeedMode = 'everyone' | 'following'
+
 export default function FeedPage() {
   const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [feedMode, setFeedMode] = useState<FeedMode>('everyone')
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -22,11 +26,13 @@ export default function FeedPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
+      setUserId(user.id)
+
       const [profileResult, postsResult] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase
           .from('posts')
-          .select('*, profiles!user_id(*)')
+          .select('*, profiles!user_id(*), likes(user_id)')
           .order('created_at', { ascending: false })
           .limit(50),
       ])
@@ -40,6 +46,46 @@ export default function FeedPage() {
     }
     load()
   }, [router])
+
+  const loadFollowingFeed = async () => {
+    if (!userId) return
+    setLoading(true)
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*, profiles!user_id(*), likes(user_id)')
+      .in('user_id', [
+        userId,
+        ...(await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', userId)
+          .then(r => r.data?.map(f => f.following_id) ?? []))
+      ])
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (!error) setPosts(data ?? [])
+    setLoading(false)
+  }
+
+  const loadEveryoneFeed = async () => {
+    setLoading(true)
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*, profiles!user_id(*), likes(user_id)')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    if (!error) setPosts(data ?? [])
+    setLoading(false)
+  }
+
+  const handleModeSwitch = (mode: FeedMode) => {
+    setFeedMode(mode)
+    if (mode === 'following') loadFollowingFeed()
+    else loadEveryoneFeed()
+  }
 
   const handleNewPost = (post: Post) => setPosts(prev => [post, ...prev])
   const handlePostRollback = (postId: string) => setPosts(prev => prev.filter(p => p.id !== postId))
@@ -90,10 +136,27 @@ export default function FeedPage() {
                   />
                 </div>
               )}
+
+              {/* Feed toggle */}
+              <div className="flex gap-0 mb-3 border border-gray-300 rounded overflow-hidden w-fit">
+                <button
+                  onClick={() => handleModeSwitch('everyone')}
+                  className={`px-4 py-1.5 text-xs font-medium ${feedMode === 'everyone' ? 'bg-[#3b5998] text-white' : 'bg-white text-[#3b5998] hover:bg-blue-50'}`}
+                >
+                  Everyone
+                </button>
+                <button
+                  onClick={() => handleModeSwitch('following')}
+                  className={`px-4 py-1.5 text-xs font-medium border-l border-gray-300 ${feedMode === 'following' ? 'bg-[#3b5998] text-white' : 'bg-white text-[#3b5998] hover:bg-blue-50'}`}
+                >
+                  Following
+                </button>
+              </div>
+
               <div className="space-y-2">
                 {posts.length === 0 ? (
                   <div className="bg-white border border-gray-300 rounded p-8 text-center text-gray-500">
-                    No posts yet — be the first to post!
+                    {feedMode === 'following' ? "You're not following anyone yet." : 'No posts yet — be the first to post!'}
                   </div>
                 ) : (
                   posts.map(post => (

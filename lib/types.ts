@@ -13,6 +13,7 @@ export interface Post {
   content: string
   created_at: string
   profiles?: Profile // joined
+  likes?: { user_id: string }[] // joined
 }
 
 export interface Follow {

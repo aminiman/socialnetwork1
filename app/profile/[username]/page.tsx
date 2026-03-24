@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import PostList from '@/components/posts/post-list'
 import Navbar from '@/components/ui/navbar'
+import FollowButton from '@/components/profile/follow-button'
 import { formatJoinDate } from '@/lib/utils'
 
 interface ProfilePageProps {
@@ -23,15 +24,39 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   if (profileError || !profile) notFound()
 
-  const { data: posts } = await supabase
-    .from('posts')
-    .select('*, profiles!user_id(*)')
-    .eq('user_id', profile.id)
-    .order('created_at', { ascending: false })
+  const [postsResult, followersResult, followingResult] = await Promise.all([
+    supabase
+      .from('posts')
+      .select('*, profiles!user_id(*), likes(user_id)')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', profile.id),
+    supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', profile.id),
+  ])
 
+  const followerCount = followersResult.count ?? 0
+  const followingCount = followingResult.count ?? 0
   const isOwner = user?.id === profile.id
 
-  // Reuse already-fetched profile if viewing own page, else fetch current user's username
+  // Check if current user follows this profile
+  let isFollowing = false
+  if (user && !isOwner) {
+    const { data: followRow } = await supabase
+      .from('follows')
+      .select('follower_id')
+      .eq('follower_id', user.id)
+      .eq('following_id', profile.id)
+      .single()
+    isFollowing = !!followRow
+  }
+
+  // Get current user's username for navbar
   let currentUsername: string | undefined
   if (isOwner) {
     currentUsername = profile.username
@@ -73,38 +98,53 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
               {profile.display_name}&apos;s Profile
             </div>
             <div className="p-4 flex gap-4">
-              {/* Avatar */}
               <div className="w-20 h-20 rounded bg-blue-100 flex items-center justify-center text-[#3b5998] font-bold text-4xl shrink-0 border border-gray-300">
                 {profile.display_name[0].toUpperCase()}
               </div>
-              {/* Info */}
               <div className="flex-1">
-                <table className="text-xs w-full">
-                  <tbody>
-                    <tr>
-                      <td className="text-gray-500 pr-4 py-0.5 w-32">Name:</td>
-                      <td className="font-semibold text-gray-900">{profile.display_name}</td>
-                    </tr>
-                    <tr>
-                      <td className="text-gray-500 pr-4 py-0.5">Username:</td>
-                      <td className="text-gray-800">@{profile.username}</td>
-                    </tr>
-                    {profile.bio && (
+                <div className="flex items-start justify-between mb-2">
+                  <table className="text-xs">
+                    <tbody>
                       <tr>
-                        <td className="text-gray-500 pr-4 py-0.5">About me:</td>
-                        <td className="text-gray-800">{profile.bio}</td>
+                        <td className="text-gray-500 pr-4 py-0.5 w-32">Name:</td>
+                        <td className="font-semibold text-gray-900">{profile.display_name}</td>
                       </tr>
-                    )}
-                    <tr>
-                      <td className="text-gray-500 pr-4 py-0.5">Member since:</td>
-                      <td className="text-gray-800">{formatJoinDate(profile.created_at)}</td>
-                    </tr>
-                    <tr>
-                      <td className="text-gray-500 pr-4 py-0.5">Posts:</td>
-                      <td className="text-gray-800">{posts?.length ?? 0}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                      <tr>
+                        <td className="text-gray-500 pr-4 py-0.5">Username:</td>
+                        <td className="text-gray-800">@{profile.username}</td>
+                      </tr>
+                      {profile.bio && (
+                        <tr>
+                          <td className="text-gray-500 pr-4 py-0.5">About me:</td>
+                          <td className="text-gray-800">{profile.bio}</td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td className="text-gray-500 pr-4 py-0.5">Member since:</td>
+                        <td className="text-gray-800">{formatJoinDate(profile.created_at)}</td>
+                      </tr>
+                      <tr>
+                        <td className="text-gray-500 pr-4 py-0.5">Posts:</td>
+                        <td className="text-gray-800">{postsResult.data?.length ?? 0}</td>
+                      </tr>
+                      <tr>
+                        <td className="text-gray-500 pr-4 py-0.5">Followers:</td>
+                        <td className="text-gray-800">{followerCount}</td>
+                      </tr>
+                      <tr>
+                        <td className="text-gray-500 pr-4 py-0.5">Following:</td>
+                        <td className="text-gray-800">{followingCount}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  {!isOwner && user && (
+                    <FollowButton
+                      currentUserId={user.id}
+                      targetUserId={profile.id}
+                      initialFollowing={isFollowing}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -116,7 +156,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             </div>
             <div className="p-3">
               <PostList
-                initialPosts={posts ?? []}
+                initialPosts={postsResult.data ?? []}
                 currentUserId={user?.id}
               />
             </div>

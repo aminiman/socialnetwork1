@@ -10,10 +10,12 @@ const MAX_CHARS = 280
 interface PostComposerProps {
   userId: string
   displayName: string
+  username: string
   onPost: (post: Post) => void
+  onPostRollback: (postId: string) => void
 }
 
-export default function PostComposer({ userId, displayName, onPost }: PostComposerProps) {
+export default function PostComposer({ userId, displayName, username, onPost, onPostRollback }: PostComposerProps) {
   const router = useRouter()
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
@@ -38,7 +40,7 @@ export default function PostComposer({ userId, displayName, onPost }: PostCompos
       profiles: {
         id: userId,
         display_name: displayName,
-        username: '',
+        username,
         bio: null,
         avatar_url: null,
         created_at: new Date().toISOString(),
@@ -55,6 +57,7 @@ export default function PostComposer({ userId, displayName, onPost }: PostCompos
 
     if (insertError) {
       setError('Failed to post. Please try again.')
+      onPostRollback(optimisticPost.id)
       setLoading(false)
       return
     }

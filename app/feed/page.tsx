@@ -14,6 +14,7 @@ export default function FeedPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -21,7 +22,7 @@ export default function FeedPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
-      const [{ data: profileData }, { data: postsData }] = await Promise.all([
+      const [profileResult, postsResult] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase
           .from('posts')
@@ -30,14 +31,18 @@ export default function FeedPage() {
           .limit(50),
       ])
 
-      setProfile(profileData)
-      setPosts(postsData ?? [])
+      if (profileResult.error) { setFetchError('Failed to load profile.'); setLoading(false); return }
+      if (postsResult.error) { setFetchError('Failed to load feed.'); setLoading(false); return }
+
+      setProfile(profileResult.data)
+      setPosts(postsResult.data ?? [])
       setLoading(false)
     }
     load()
   }, [router])
 
   const handleNewPost = (post: Post) => setPosts(prev => [post, ...prev])
+  const handlePostRollback = (postId: string) => setPosts(prev => prev.filter(p => p.id !== postId))
 
   return (
     <>
@@ -61,7 +66,9 @@ export default function FeedPage() {
 
         {/* Main content */}
         <main className="flex-1 min-w-0">
-          {loading ? (
+          {fetchError ? (
+            <div className="bg-white border border-gray-300 rounded p-6 text-center text-red-600">{fetchError}</div>
+          ) : loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
                 <div key={i} className="h-24 bg-gray-200 animate-pulse rounded" />
@@ -74,7 +81,9 @@ export default function FeedPage() {
                   <PostComposer
                     userId={profile.id}
                     displayName={profile.display_name}
+                    username={profile.username}
                     onPost={handleNewPost}
+                    onPostRollback={handlePostRollback}
                   />
                 </div>
               )}

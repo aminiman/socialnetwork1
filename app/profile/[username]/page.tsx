@@ -15,13 +15,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('username', username)
     .single()
 
-  if (!profile) notFound()
+  if (profileError || !profile) notFound()
 
   const { data: posts } = await supabase
     .from('posts')
@@ -31,9 +31,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const isOwner = user?.id === profile.id
 
-  // Get current user's username for navbar
+  // Reuse already-fetched profile if viewing own page, else fetch current user's username
   let currentUsername: string | undefined
-  if (user) {
+  if (isOwner) {
+    currentUsername = profile.username
+  } else if (user) {
     const { data: currentProfile } = await supabase
       .from('profiles')
       .select('username')

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import PostCard from '@/components/posts/post-card'
+import PostList from '@/components/posts/post-list'
 import Navbar from '@/components/ui/navbar'
 import { formatJoinDate } from '@/lib/utils'
 
@@ -114,12 +114,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             <div className="bg-[#3b5998] text-white text-xs font-bold px-3 py-1 rounded-t">
               {profile.display_name}&apos;s Posts
             </div>
-            <div className="p-3 space-y-2">
-              {!posts || posts.length === 0 ? (
-                <p className="text-gray-500 text-center py-6">No posts yet.</p>
-              ) : (
-                posts.map(post => <PostCard key={post.id} post={post} />)
-              )}
+            <div className="p-3">
+              <PostList
+                initialPosts={posts ?? []}
+                currentUserId={user?.id}
+              />
             </div>
           </div>
 

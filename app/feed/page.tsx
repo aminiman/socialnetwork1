@@ -43,6 +43,7 @@ export default function FeedPage() {
 
   const handleNewPost = (post: Post) => setPosts(prev => [post, ...prev])
   const handlePostRollback = (postId: string) => setPosts(prev => prev.filter(p => p.id !== postId))
+  const handleDelete = (postId: string) => setPosts(prev => prev.filter(p => p.id !== postId))
 
   return (
     <>
@@ -93,7 +94,14 @@ export default function FeedPage() {
                     No posts yet — be the first to post!
                   </div>
                 ) : (
-                  posts.map(post => <PostCard key={post.id} post={post} />)
+                  posts.map(post => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      currentUserId={profile?.id}
+                      onDelete={handleDelete}
+                    />
+                  ))
                 )}
               </div>
             </>

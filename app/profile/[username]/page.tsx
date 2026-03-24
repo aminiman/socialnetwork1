@@ -25,7 +25,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const { data: posts } = await supabase
     .from('posts')
-    .select('*, profiles(*)')
+    .select('*, profiles!user_id(*)')
     .eq('user_id', profile.id)
     .order('created_at', { ascending: false })
 

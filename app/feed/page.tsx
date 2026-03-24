@@ -26,7 +26,7 @@ export default function FeedPage() {
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase
           .from('posts')
-          .select('*, profiles(*)')
+          .select('*, profiles!user_id(*)')
           .order('created_at', { ascending: false })
           .limit(50),
       ])

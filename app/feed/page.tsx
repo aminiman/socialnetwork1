@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
+import Navbar from '@/components/ui/navbar'
 import PostComposer from '@/components/posts/post-composer'
 import PostCard from '@/components/posts/post-card'
 import type { Post, Profile } from '@/lib/types'
@@ -16,7 +18,6 @@ export default function FeedPage() {
   useEffect(() => {
     const load = async () => {
       const supabase = createClient()
-
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
@@ -33,54 +34,64 @@ export default function FeedPage() {
       setPosts(postsData ?? [])
       setLoading(false)
     }
-
     load()
   }, [router])
 
-  const handleNewPost = (post: Post) => {
-    setPosts(prev => [post, ...prev])
-  }
-
-  if (loading) {
-    return (
-      <main className="max-w-xl mx-auto px-4 py-8 space-y-3">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-24 bg-gray-100 animate-pulse rounded-xl" />
-        ))}
-      </main>
-    )
-  }
+  const handleNewPost = (post: Post) => setPosts(prev => [post, ...prev])
 
   return (
-    <main className="max-w-xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Feed</h1>
-        {profile && (
-          <a href={`/profile/${profile.username}`} className="text-sm text-blue-600 hover:underline">
-            @{profile.username}
-          </a>
-        )}
-      </div>
+    <>
+      <Navbar username={profile?.username} />
+      <div className="max-w-5xl mx-auto px-4 py-4 flex gap-4">
 
-      {profile && (
-        <div className="mb-4">
-          <PostComposer
-            userId={profile.id}
-            displayName={profile.display_name}
-            onPost={handleNewPost}
-          />
-        </div>
-      )}
+        {/* Left sidebar */}
+        <aside className="w-44 shrink-0 space-y-1">
+          <div className="bg-[#3b5998] text-white text-xs font-bold px-2 py-1 rounded-t">
+            {profile?.display_name ?? ''}
+          </div>
+          <div className="bg-white border border-gray-300 rounded-b text-xs divide-y divide-gray-200">
+            <Link href="/feed" className="block px-3 py-2 hover:bg-blue-50 text-[#3b5998]">Home</Link>
+            {profile && (
+              <Link href={`/profile/${profile.username}`} className="block px-3 py-2 hover:bg-blue-50 text-[#3b5998]">
+                My Profile
+              </Link>
+            )}
+          </div>
+        </aside>
 
-      <div className="space-y-3">
-        {posts.length === 0 ? (
-          <p className="text-center text-gray-500 py-12">
-            No posts yet — be the first to post!
-          </p>
-        ) : (
-          posts.map(post => <PostCard key={post.id} post={post} />)
-        )}
+        {/* Main content */}
+        <main className="flex-1 min-w-0">
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-24 bg-gray-200 animate-pulse rounded" />
+              ))}
+            </div>
+          ) : (
+            <>
+              {profile && (
+                <div className="mb-3">
+                  <PostComposer
+                    userId={profile.id}
+                    displayName={profile.display_name}
+                    onPost={handleNewPost}
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
+                {posts.length === 0 ? (
+                  <div className="bg-white border border-gray-300 rounded p-8 text-center text-gray-500">
+                    No posts yet — be the first to post!
+                  </div>
+                ) : (
+                  posts.map(post => <PostCard key={post.id} post={post} />)
+                )}
+              </div>
+            </>
+          )}
+        </main>
+
       </div>
-    </main>
+    </>
   )
 }

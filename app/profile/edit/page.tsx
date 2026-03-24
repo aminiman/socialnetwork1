@@ -59,25 +59,25 @@ export default function EditProfilePage() {
     setError(null)
 
     const supabase = createClient()
-    const { error } = await supabase.from('profiles').update({
-      display_name: fields.display_name?.trim() || profile.display_name,
-      bio: fields.bio?.trim() || null,
-      hometown: fields.hometown?.trim() || null,
-      relationship_status: fields.relationship_status?.trim() || null,
-      birthday: fields.birthday || null,
-      interests: fields.interests?.trim() || null,
-      favorite_music: fields.favorite_music?.trim() || null,
-      favorite_books: fields.favorite_books?.trim() || null,
-      favorite_quotes: fields.favorite_quotes?.trim() || null,
-      activities: fields.activities?.trim() || null,
-      college: fields.college?.trim() || null,
-      high_school: fields.high_school?.trim() || null,
-      employer: fields.employer?.trim() || null,
-      work_period: fields.work_period?.trim() || null,
-      work_description: fields.work_description?.trim() || null,
-    }).eq('id', profile.id)
+    const { error } = await supabase.rpc('update_extended_profile', {
+      p_display_name: fields.display_name?.trim() || profile.display_name,
+      p_bio: fields.bio?.trim() || null,
+      p_hometown: fields.hometown?.trim() || null,
+      p_relationship_status: fields.relationship_status?.trim() || null,
+      p_birthday: fields.birthday || null,
+      p_interests: fields.interests?.trim() || null,
+      p_favorite_music: fields.favorite_music?.trim() || null,
+      p_favorite_books: fields.favorite_books?.trim() || null,
+      p_favorite_quotes: fields.favorite_quotes?.trim() || null,
+      p_activities: fields.activities?.trim() || null,
+      p_college: fields.college?.trim() || null,
+      p_high_school: fields.high_school?.trim() || null,
+      p_employer: fields.employer?.trim() || null,
+      p_work_period: fields.work_period?.trim() || null,
+      p_work_description: fields.work_description?.trim() || null,
+    })
 
-    if (error) { setError(error.message); setSaving(false); return }
+    if (error) { setError('Failed to save changes.'); setSaving(false); return }
     router.push(`/profile/${profile.username}`)
   }
 

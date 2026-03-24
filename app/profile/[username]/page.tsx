@@ -149,6 +149,79 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             </div>
           </div>
 
+          {/* Information panel */}
+          <div className="bg-white border border-gray-300 rounded mb-3">
+            <div className="bg-[#e8edf5] border-b border-gray-300 text-[#3b5998] text-xs font-bold px-3 py-1">
+              Information
+            </div>
+            <div className="p-4 text-xs space-y-4">
+              {/* Account Info */}
+              <div>
+                <p className="font-bold text-[#3b5998] mb-1">Account Info</p>
+                <table className="w-full">
+                  <tbody>
+                    <InfoRow label="Name:" value={profile.display_name} />
+                    <InfoRow label="Member since:" value={formatJoinDate(profile.created_at)} />
+                  </tbody>
+                </table>
+              </div>
+              {/* Basic Info */}
+              {(profile.relationship_status || profile.birthday || profile.hometown) && (
+                <div>
+                  <p className="font-bold text-[#3b5998] mb-1">Basic Info</p>
+                  <table className="w-full">
+                    <tbody>
+                      <InfoRow label="Relationship Status:" value={profile.relationship_status} />
+                      <InfoRow label="Birthday:" value={profile.birthday} />
+                      <InfoRow label="Hometown:" value={profile.hometown} />
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {/* Personal Info */}
+              {(profile.activities || profile.interests || profile.favorite_music || profile.favorite_books || profile.favorite_quotes || profile.bio) && (
+                <div>
+                  <p className="font-bold text-[#3b5998] mb-1">Personal Info</p>
+                  <table className="w-full">
+                    <tbody>
+                      <InfoRow label="Activities:" value={profile.activities} />
+                      <InfoRow label="Interests:" value={profile.interests} />
+                      <InfoRow label="Favorite Music:" value={profile.favorite_music} />
+                      <InfoRow label="Favorite Books:" value={profile.favorite_books} />
+                      <InfoRow label="Favorite Quotes:" value={profile.favorite_quotes} />
+                      <InfoRow label="About Me:" value={profile.bio} />
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {/* Education Info */}
+              {(profile.college || profile.high_school) && (
+                <div>
+                  <p className="font-bold text-[#3b5998] mb-1">Education Info</p>
+                  <table className="w-full">
+                    <tbody>
+                      <InfoRow label="College:" value={profile.college} />
+                      <InfoRow label="High School:" value={profile.high_school} />
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {/* Work Info */}
+              {(profile.employer || profile.work_period || profile.work_description) && (
+                <div>
+                  <p className="font-bold text-[#3b5998] mb-1">Work Info</p>
+                  <table className="w-full">
+                    <tbody>
+                      <InfoRow label="Company:" value={profile.employer} />
+                      <InfoRow label="Time Period:" value={profile.work_period} />
+                      <InfoRow label="Description:" value={profile.work_description} />
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Posts */}
           <div className="bg-white border border-gray-300 rounded">
             <div className="bg-[#3b5998] text-white text-xs font-bold px-3 py-1 rounded-t">
@@ -165,5 +238,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </main>
       </div>
     </>
+  )
+}
+
+function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null
+  return (
+    <tr>
+      <td className="text-gray-500 pr-4 py-0.5 w-36 align-top">{label}</td>
+      <td className="text-gray-800 font-semibold">{value}</td>
+    </tr>
   )
 }

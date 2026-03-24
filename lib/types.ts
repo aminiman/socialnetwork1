@@ -5,6 +5,20 @@ export interface Profile {
   bio: string | null
   avatar_url: string | null
   created_at: string
+  // Extended profile fields
+  hometown: string | null
+  relationship_status: string | null
+  birthday: string | null
+  interests: string | null
+  favorite_music: string | null
+  favorite_books: string | null
+  favorite_quotes: string | null
+  activities: string | null
+  college: string | null
+  high_school: string | null
+  employer: string | null
+  work_period: string | null
+  work_description: string | null
 }
 
 export interface Post {

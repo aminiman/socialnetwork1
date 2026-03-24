@@ -77,7 +77,7 @@ export default function EditProfilePage() {
       p_work_description: fields.work_description?.trim() || null,
     })
 
-    if (error) { setError('Failed to save changes.'); setSaving(false); return }
+    if (error) { setError(error.message); setSaving(false); return }
     router.push(`/profile/${profile.username}`)
   }
 

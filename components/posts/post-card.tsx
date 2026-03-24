@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { formatRelativeTime } from '@/lib/utils'
+import CommentSection from './comment-section'
 import type { Post } from '@/lib/types'
 
 interface PostCardProps {
@@ -15,6 +16,7 @@ interface PostCardProps {
 export default function PostCard({ post, currentUserId, onDelete }: PostCardProps) {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(false)
+  const [showComments, setShowComments] = useState(false)
 
   const initialLiked = post.likes?.some(l => l.user_id === currentUserId) ?? false
   const initialCount = post.likes?.length ?? 0
@@ -101,10 +103,23 @@ export default function PostCard({ post, currentUserId, onDelete }: PostCardProp
               <span className="text-base leading-none">👍</span>
               <span>{liked ? 'Liked' : 'Like'}</span>
             </button>
+            <button
+              onClick={() => setShowComments(v => !v)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold border-2 border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              💬 Comment
+            </button>
             {likeCount > 0 && (
               <span className="text-xs text-gray-500">{likeCount} {likeCount === 1 ? 'person' : 'people'} like this</span>
             )}
           </div>
+          {showComments && (
+            <CommentSection
+              postId={post.id}
+              currentUserId={currentUserId}
+              currentDisplayName={post.profiles?.display_name}
+            />
+          )}
         </div>
       </div>
     </div>

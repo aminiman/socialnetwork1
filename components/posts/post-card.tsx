@@ -88,18 +88,22 @@ export default function PostCard({ post, currentUserId, onDelete }: PostCardProp
           </div>
           <p className="mt-1 text-gray-800 whitespace-pre-wrap break-words">{post.content}</p>
           {deleteError && <p className="text-xs text-red-500 mt-1">Failed to delete. Please try again.</p>}
-          <div className="mt-2 flex items-center gap-1">
+          <div className="mt-2 flex items-center gap-2">
             <button
               onClick={handleLike}
               disabled={!currentUserId || liking}
-              className={`text-xs flex items-center gap-1 px-2 py-0.5 rounded border transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold border-2 transition-colors disabled:opacity-40 ${
                 liked
-                  ? 'border-red-300 text-red-500 bg-red-50'
-                  : 'border-gray-200 text-gray-400 hover:border-red-300 hover:text-red-400'
-              } disabled:opacity-40`}
+                  ? 'bg-[#3b5998] border-[#2d4473] text-white'
+                  : 'bg-gradient-to-b from-[#5b78b0] to-[#3b5998] border-[#2d4473] text-white hover:from-[#6b88c0] hover:to-[#4b69a8]'
+              }`}
             >
-              ♥ {likeCount > 0 && <span>{likeCount}</span>}
+              <span className="text-base leading-none">👍</span>
+              <span>{liked ? 'Liked' : 'Like'}</span>
             </button>
+            {likeCount > 0 && (
+              <span className="text-xs text-gray-500">{likeCount} {likeCount === 1 ? 'person' : 'people'} like this</span>
+            )}
           </div>
         </div>
       </div>

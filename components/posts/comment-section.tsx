@@ -23,7 +23,7 @@ export default function CommentSection({ postId, currentUserId, currentDisplayNa
       const supabase = createClient()
       const { data } = await supabase
         .from('comments')
-        .select('*, profiles!user_id(*)')
+        .select('*, profiles(id, username, display_name, bio, avatar_url, created_at)')
         .eq('post_id', postId)
         .order('created_at', { ascending: true })
       setComments(data ?? [])
@@ -56,16 +56,12 @@ export default function CommentSection({ postId, currentUserId, currentDisplayNa
     setContent('')
 
     const supabase = createClient()
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('comments')
       .insert({ post_id: postId, user_id: currentUserId, content: optimistic.content })
-      .select('*, profiles!user_id(*)')
-      .single()
 
     if (error) {
       setComments(prev => prev.filter(c => c.id !== optimistic.id))
-    } else if (data) {
-      setComments(prev => prev.map(c => c.id === optimistic.id ? data as Comment : c))
     }
     setSubmitting(false)
   }
